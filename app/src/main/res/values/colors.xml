@@ -15,5 +15,7 @@
     <color name="black">#000000</color>
     <color name="yellow">#FFFF00</color>;
 
+    <color name="lowgray">#50AAAAAA</color>
+
 
 </resources>

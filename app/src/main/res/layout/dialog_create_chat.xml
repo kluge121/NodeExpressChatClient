@@ -1,0 +1,43 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="350dp"
+    android:layout_height="200dp"
+    android:layout_alignParentTop="true"
+    android:layout_centerHorizontal="true">
+
+    <TextView
+        android:id="@+id/cd_add_category_title_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="15dp"
+        android:text="채팅할 사용자 닉네임을 입력해주세요" />
+
+    <EditText
+        android:id="@+id/cd_add_nickname_et"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/cd_add_category_title_tv"
+        android:layout_centerHorizontal="true"
+        android:inputType="text"
+        android:textDirection="locale" />
+
+    <Button
+        android:id="@+id/cd_add_category_cancel_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginRight="20dp"
+        android:text="취소"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Button" />
+
+    <Button
+        android:id="@+id/cd_add_category_submit_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp"
+        android:layout_toLeftOf="@id/cd_add_category_cancel_bt"
+        android:text="확인" />
+</RelativeLayout>
