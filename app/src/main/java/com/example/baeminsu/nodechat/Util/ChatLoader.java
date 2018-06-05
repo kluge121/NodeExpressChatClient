@@ -21,14 +21,6 @@ public class ChatLoader {
         this.realm = realm;
     }
 
-    public void insertChatRoom(final ChatRoom chatRoom) {
-
-        realm.beginTransaction();
-        ChatRoom realUser = realm.copyToRealm(chatRoom);
-        realm.commitTransaction();
-
-    }
-
     public boolean isCheckChatRoom() {
         ChatRoom tmp = realm.where(ChatRoom.class).findFirst();
         return tmp != null;
@@ -40,7 +32,6 @@ public class ChatLoader {
         return tmp != null;
 
     }
-
 
     public RealmResults<ChatRoom> getChatRoomList() {
         if (isCheckChatRoom()) {

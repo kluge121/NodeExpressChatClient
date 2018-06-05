@@ -16,9 +16,14 @@ import com.example.baeminsu.nodechat.Chat.Chat;
 import com.example.baeminsu.nodechat.NetworkModel.ChatCreateResponseMessage;
 import com.example.baeminsu.nodechat.Model.ChatRoom;
 import com.example.baeminsu.nodechat.R;
+import com.example.baeminsu.nodechat.Util.NetworkDefine;
 import com.example.baeminsu.nodechat.Util.PropertyManager;
 import com.example.baeminsu.nodechat.Util.RetrofitAPIInterface;
 import com.example.baeminsu.nodechat.Util.RetrofitClient;
+import com.example.baeminsu.nodechat.Util.SocketManager;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Date;
 
@@ -26,6 +31,8 @@ import io.realm.Realm;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import static com.example.baeminsu.nodechat.Util.NetworkDefine.REQUEST_CREATE_CHAT_ROOM;
 
 /**
  * Created by baeminsu on 2018. 5. 29..
@@ -61,6 +68,22 @@ public class CreateChatDialog extends Dialog {
         inputNickName = findViewById(R.id.cd_add_nickname_et);
         submit = findViewById(R.id.cd_add_category_submit_bt);
         cancel = findViewById(R.id.cd_add_category_cancel_bt);
+
+        submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nickname = inputNickName.getText().toString();
+                JSONObject data = new JSONObject();
+                try {
+                    data.put("nickname", nickname);
+                    data.put("requestNickname", PropertyManager.getInstance().getNickname());
+                    SocketManager.getInstance().getSocket().emit(REQUEST_CREATE_CHAT_ROOM, data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
 
         submit.setOnClickListener(new View.OnClickListener() {
             @Override

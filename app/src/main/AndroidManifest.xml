@@ -21,10 +21,13 @@
         android:theme="@style/AppTheme">
 
         <activity android:name=".Main.MainActivity"></activity>
-        <activity android:name=".Chat.Chat">
+        <activity
+            android:name=".Chat.Chat"
+            android:windowSoftInputMode="adjustResize">
+
         </activity>
-        <activity android:name=".Login.LoginActivity">
-        </activity>
+
+        <activity android:name=".Login.LoginActivity"></activity>
         <activity android:name=".Splash.Splash">
 
             <intent-filter>

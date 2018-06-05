@@ -2,6 +2,7 @@ package com.example.baeminsu.nodechat.Util;
 
 import android.util.Log;
 
+import com.example.baeminsu.nodechat.Model.ChatRoom;
 import com.example.baeminsu.nodechat.Model.Modify;
 import com.example.baeminsu.nodechat.Model.TextMessage;
 
@@ -91,6 +92,7 @@ public class SocketManager {
             socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectionTimeOut);
             socket.on(Socket.EVENT_DISCONNECT, onServerDisconnect);
             socket.on(NetworkDefine.RECEIVE_MESSAGE, onReceiveMessage);
+            socket.on(NetworkDefine.RESPONSE_CREATE_CHAT_ROOM, getOnReceiveCreateChatRoomMessage);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -102,6 +104,7 @@ public class SocketManager {
             socket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectionTimeOut);
             socket.off(Socket.EVENT_DISCONNECT, onServerDisconnect);
             socket.off(NetworkDefine.RECEIVE_MESSAGE, onReceiveMessage);
+            socket.off(NetworkDefine.RESPONSE_CREATE_CHAT_ROOM, getOnReceiveCreateChatRoomMessage);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,13 +125,58 @@ public class SocketManager {
         public void call(Object... args) {
         }
     };
+
+    private Emitter.Listener getOnReceiveCreateChatRoomMessage = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+
+            try {
+                JSONObject jsonObject = (JSONObject) args[0];
+                int insertId = jsonObject.getInt("id");
+                String chatName = jsonObject.getString("chatName");
+                String lastMessage = jsonObject.getString("lastMessage");
+                int unReadCount = jsonObject.getInt("unreadcount");
+                /// 날짜 처리
+                String strDate = jsonObject.getString("lastDate");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                Date date = dateFormat.parse(strDate);
+                ///
+                String nickname = jsonObject.getString("nickname");
+
+                Realm realm = Realm.getDefaultInstance();
+                realm.beginTransaction();
+                // 로컬 시간 변경
+                Modify modify = realm.where(Modify.class).findFirst();
+                modify.setModify(date);
+
+                //내부DB에 채팅방 저장
+                ChatRoom chatRoom = realm.createObject(ChatRoom.class);
+                chatRoom.setChatId(insertId);
+                chatRoom.setChatName(chatName);
+                chatRoom.setUnReadCount(unReadCount);
+                chatRoom.setLastDate(date);
+                chatRoom.setLastMessage(lastMessage);
+                chatRoom.setNickname(nickname);
+                realm.commitTransaction();
+
+                //서버 시간 변경
+                JSONObject modifyDate = new JSONObject();
+                modifyDate.put("modify", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").format(date));
+                modifyDate.put("nickname", PropertyManager.getInstance().getNickname());
+                socket.emit(REQUEST_DATE_MODIFY, modifyDate);
+                Log.e("채팅방 생성 리시브", "리시브");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    };
     private Emitter.Listener onReceiveMessage = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             try {
 
                 JSONObject jsonObject = (JSONObject) args[0];
-
                 String sender = jsonObject.getString("sender");
                 String receiver = jsonObject.getString("receiver");
                 String myNickname = PropertyManager.getInstance().getNickname();
@@ -145,7 +193,7 @@ public class SocketManager {
 
                     Realm realm = Realm.getDefaultInstance();
                     realm.beginTransaction();
-                    // 로컬 최종 수정시간 변경
+                    // 로컬 시간 변경
                     Modify modify = realm.where(Modify.class).findFirst();
                     modify.setModify(date);
 
@@ -158,16 +206,24 @@ public class SocketManager {
                     textMessage.setSender(sender);
                     textMessage.setUnreadcount(unreadCount);
 
+
+                    ChatRoom chatRoom;
                     if (myNickname.equals(sender)) {
                         textMessage.setChatName(receiver);
+                        chatRoom = realm.where(ChatRoom.class).equalTo("chatName", receiver).findFirst();
                     } else {
                         textMessage.setChatName(sender);
+                        chatRoom = realm.where(ChatRoom.class).equalTo("chatName", sender).findFirst();
                     }
 
+                    if (!sender.equals(PropertyManager.getInstance().getNickname()))
+                        chatRoom.setUnReadCount(chatRoom.getUnReadCount() + 1);
+                    chatRoom.setLastMessage(msg);
+                    chatRoom.setLastDate(date);
 
                     realm.commitTransaction();
-                    realm.close();
 
+                    // 서버 시간 변경
                     JSONObject modifyDate = new JSONObject();
                     modifyDate.put("modify", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").format(date));
                     modifyDate.put("nickname", PropertyManager.getInstance().getNickname());

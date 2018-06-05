@@ -7,6 +7,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -147,20 +148,36 @@ public class Chat extends AppCompatActivity {
         ChatLoader chatLoader = new ChatLoader(realm);
         RealmResults<TextMessage> messageList = chatLoader.getChatRoomMessage(chatRoom.getChatName());
         adapter = new MessageAdapter(messageList, Chat.this);
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+
+            }
+        });
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        });
         recyclerView.setAdapter(adapter);
+        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
 
         realm.addChangeListener(chatListListener);
 
     }
 
     private void getChatInfo(String chatName) {
-        Realm realm = Realm.getDefaultInstance();
+        realm.beginTransaction();
         chatRoom = realm.where(ChatRoom.class).equalTo("chatName", chatName).findFirst();
+        chatRoom.setUnReadCount(0);
+        realm.commitTransaction();
     }
+
 
     private RealmChangeListener chatListListener = new RealmChangeListener() {
         @Override
         public void onChange(Object element) {
+//            realm.beginTransaction();
+//            chatRoom.setUnReadCount(0);
             adapter.notifyDataSetChanged();
         }
     };

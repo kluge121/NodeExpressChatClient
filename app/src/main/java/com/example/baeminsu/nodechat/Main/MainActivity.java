@@ -91,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        realm.removeChangeListener(mainListListener);
     }
 
     private RealmChangeListener mainListListener = new RealmChangeListener() {

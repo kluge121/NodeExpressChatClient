@@ -73,7 +73,10 @@ public class Splash extends AppCompatActivity {
                             localDate = new Date(0);
                         }
                         final Date serverDate = response.body().getModify();
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
+                        Log.e("로컬", dateFormat.format(localDate));
+                        Log.e("서버", dateFormat.format(serverDate));
                         //서버에 오프라인동안 전송된 데이터 요청
                         if (localDate.getTime() < serverDate.getTime()) {
 
@@ -88,6 +91,7 @@ public class Splash extends AppCompatActivity {
                                         Log.e("체크", "채팅룸 받는중");
                                         for (ChatRoom aList : chattList) {
                                             realm.copyToRealm(aList);
+                                            Log.e("체크",aList.getChatName()+" dd");
 
                                         }
                                     }
@@ -96,13 +100,14 @@ public class Splash extends AppCompatActivity {
                                         if (messageList.size() > 0) {
                                             Log.e("체크", "메세지 받는중");
                                             for (TextMessage aList : messageList) {
+                                                Log.e("메시지받는거 뭐냐", aList.getMsg());
                                                 realm.copyToRealm(aList);
+                                                String chatName = aList.getChatName();
+//                                                ChatRoom chatRoom = realm.where(ChatRoom.class).equalTo("chatName", chatName).findFirst();
+//                                                chatRoom.setUnReadCount(chatRoom.getUnReadCount() + 1);
                                             }
                                         }
                                     }
-
-
-                                    //TODO 메세지 정보 받아오기
 
                                     Modify tmp = realm.where(Modify.class).findFirst();
                                     tmp.setModify(serverDate);
@@ -110,14 +115,14 @@ public class Splash extends AppCompatActivity {
 
                                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                                     startActivity(intent);
-                                    realm.close();
+
                                     finish();
 
                                 }
 
                                 @Override
                                 public void onFailure(Call<ModifyResponse> call, Throwable t) {
-                                    realm.close();
+
                                 }
                             });
 
@@ -125,7 +130,6 @@ public class Splash extends AppCompatActivity {
                         } else {
                             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                             startActivity(intent);
-                            realm.close();
                             finish();
                         }
 

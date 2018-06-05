@@ -16,6 +16,8 @@ public class NetworkDefine {
     public static final String SEND_MESSAGE = "sendMessage";
     public static final String RECEIVE_MESSAGE = "relayMessage";
     public static final String REQUEST_DATE_MODIFY = "requestUpdateModify";
+    public static final String REQUEST_CREATE_CHAT_ROOM = "requestCreateChatRoom";
+    public static final String RESPONSE_CREATE_CHAT_ROOM = "responseCreateChatRoom";
 
 
 }

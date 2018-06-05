@@ -87,6 +87,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             if (chatRoom.getUnReadCount() > 0) {
                 unReadCount.setVisibility(View.VISIBLE);
                 unReadCount.setText(chatRoom.getUnReadCount() + "");
+            } else {
+                unReadCount.setVisibility(View.INVISIBLE);
             }
 
             if (chatRoom.getLastDate() != null) {

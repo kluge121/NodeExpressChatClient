@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -67,20 +68,20 @@ public class LoginActivity extends AppCompatActivity {
                                 accessToken = response.body().getAccessToken();
                                 msg = response.body().getMsg();
                             } catch (NullPointerException e) {
-                                Toast.makeText(getApplicationContext(), "인터넷 연결상태를 확인해주세요", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "인터넷 연결상태를 확인해주세요1", Toast.LENGTH_SHORT).show();
                                 return;
                             }
                             if ("join success".equals(msg)) { // 새로 회원가입 값 다시 세팅
                                 PropertyManager.getInstance().setAccessToken(accessToken);
                                 PropertyManager.getInstance().setNickname(nickname);
+                                Date date = response.body().getModify();
                                 Realm realm = Realm.getDefaultInstance();
                                 realm.beginTransaction();
                                 Modify modify = realm.createObject(Modify.class);
-                                modify.setModify(new Date());
+                                modify.setModify(date);
                                 realm.commitTransaction();
-                                realm.close();
 
-                            } else if ("token reissuance".equals(msg)) { // 회원가입인 되있는데 토큰이 없을때 로그인 성공
+                            } else if ("token reissuance".equals(msg)) { // 회원가입은 되있는데 토큰이 없을때 로그인 성공
                                 PropertyManager.getInstance().setAccessToken(accessToken);
                             }
                             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -91,7 +92,8 @@ public class LoginActivity extends AppCompatActivity {
 
                         @Override
                         public void onFailure(Call<LoginResponseMessage> call, Throwable t) {
-                            Toast.makeText(getApplicationContext(), "인터넷 연결상태를 확인해주세요", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), "인터넷 연결상태를 확인해주세요2", Toast.LENGTH_SHORT).show();
+                            Log.e("cpcp",t.toString());
                         }
                     });
 

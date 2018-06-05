@@ -65,7 +65,10 @@ public class MessageAdapter extends RecyclerView.Adapter<BasicViewHolder> {
 
     @Override
     public int getItemCount() {
-        return messageList.size();
+        if (messageList != null && messageList.size() > 0)
+            return messageList.size();
+        else
+            return 0;
     }
 
     @Override
@@ -81,9 +84,4 @@ public class MessageAdapter extends RecyclerView.Adapter<BasicViewHolder> {
         return INVALID_TYPE;
 
     }
-
-    public void addMessage(TextMessage textMessage) {
-        messageList.add(textMessage);
-    }
-
 }
