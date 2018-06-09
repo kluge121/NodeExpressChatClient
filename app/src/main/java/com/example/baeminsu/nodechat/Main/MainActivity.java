@@ -12,16 +12,19 @@ import android.widget.TextView;
 
 import com.example.baeminsu.nodechat.Dialog.CreateChatDialog;
 import com.example.baeminsu.nodechat.Model.ChatRoom;
+import com.example.baeminsu.nodechat.Model.TextMessage;
+import com.example.baeminsu.nodechat.NetworkHelper.NetworkFacade;
+import com.example.baeminsu.nodechat.Observer.Observer;
 import com.example.baeminsu.nodechat.R;
-import com.example.baeminsu.nodechat.Util.ChatLoader;
 import com.example.baeminsu.nodechat.Util.PropertyManager;
-import com.example.baeminsu.nodechat.Util.SocketManager;
+
+import java.util.Date;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Observer {
 
     private RecyclerView recyclerView;
     private ChatListAdapter adapter;
@@ -32,14 +35,16 @@ public class MainActivity extends AppCompatActivity {
     private Realm realm = Realm.getDefaultInstance();
 
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initBasicRecylcerviewItem();
         settingWidget();
         settingChatList();
         //소켓 연결
-        SocketManager.getInstance().connectSocket();
 
 
     }
@@ -66,20 +71,34 @@ public class MainActivity extends AppCompatActivity {
     private void settingChatList() {
 
         RealmResults<ChatRoom> results = null;
+        results = NetworkFacade.getInstace().requestGetChatRoomList();;
+        adapter = new ChatListAdapter(this, results);
+        recyclerView.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setAdapter(adapter);
 
-
-        ChatLoader chatLoader = new ChatLoader(realm);
-        if (chatLoader.isCheckChatRoom()) {
-            results = chatLoader.getChatRoomList();
-            adapter = new ChatListAdapter(this, results);
-            recyclerView.setLayoutManager(
-                    new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-            recyclerView.setAdapter(adapter);
-
-            realm.addChangeListener(mainListListener);
-        } else {
+        if (adapter.getList().size() == 1)
             notChatNoti.setVisibility(View.VISIBLE);
+        else
+            notChatNoti.setVisibility(View.INVISIBLE);
+
+
+        realm.addChangeListener(mainListListener);
+
+        if (adapter.getItemCount() > 0) {
+            adapter.getList().addChangeListener(new RealmChangeListener<RealmResults<ChatRoom>>() {
+                @Override
+                public void onChange(RealmResults<ChatRoom> element) {
+                    adapter.notifyDataSetChanged();
+                    if (adapter.getList().size() == 1)
+                        notChatNoti.setVisibility(View.VISIBLE);
+                    else
+                        notChatNoti.setVisibility(View.INVISIBLE);
+                }
+            });
         }
+
+
     }
 
     @Override
@@ -100,4 +119,42 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+
+    private void initBasicRecylcerviewItem() {
+        realm.beginTransaction();
+        if (realm.where(TextMessage.class).equalTo("msg", "").findFirst() == null) {
+
+            TextMessage initMessage = realm.createObject(TextMessage.class);
+            initMessage.setId(-1);
+            initMessage.setUnreadcount(0);
+            initMessage.setChatName("");
+            initMessage.setDate(new Date());
+            initMessage.setReceiver("me");
+            initMessage.setSender("me");
+            initMessage.setReceiver("me");
+            initMessage.setMsg("");
+        }
+
+        if (realm.where(ChatRoom.class).equalTo("chatId", -1).findFirst() == null) {
+            ChatRoom chatRoom = realm.createObject(ChatRoom.class);
+            chatRoom.setChatId(-1);
+            chatRoom.setLastCheckDate(new Date());
+            chatRoom.setLastDate(new Date());
+            chatRoom.setUnReadCount(0);
+            chatRoom.setChatName("");
+            chatRoom.setNickname("");
+            chatRoom.setLastMessage("");
+        }
+        realm.commitTransaction();
+
+    }
+
+    @Override
+    public void update() {
+        adapter.notifyDataSetChanged();
+        if (adapter.getList().size() == 1)
+            notChatNoti.setVisibility(View.VISIBLE);
+        else
+            notChatNoti.setVisibility(View.INVISIBLE);
+    }
 }

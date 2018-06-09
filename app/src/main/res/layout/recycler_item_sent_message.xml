@@ -39,7 +39,7 @@
         android:layout_marginLeft="5dp"
         android:layout_marginStart="5dp"
         android:text="2"
-        android:textColor="@color/black"
+        android:textColor="@color/red"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/text_message_time" />
 

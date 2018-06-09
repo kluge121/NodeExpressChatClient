@@ -1,4 +1,4 @@
-package com.example.baeminsu.nodechat.Util;
+package com.example.baeminsu.nodechat.NetworkHelper;
 
 /**
  * Created by baeminsu on 2018. 5. 29..
@@ -18,6 +18,13 @@ public class NetworkDefine {
     public static final String REQUEST_DATE_MODIFY = "requestUpdateModify";
     public static final String REQUEST_CREATE_CHAT_ROOM = "requestCreateChatRoom";
     public static final String RESPONSE_CREATE_CHAT_ROOM = "responseCreateChatRoom";
+
+    public static final String UNREAD_COUNT_READ_REQUEST = "unReadCountReadRequest";
+    public static final String UNREAD_COUNT_READ_RESPONSE = "unReadCountReadResponse";
+
+
+
+
 
 
 }

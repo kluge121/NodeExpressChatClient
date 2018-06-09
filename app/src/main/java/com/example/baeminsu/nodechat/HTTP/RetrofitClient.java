@@ -1,4 +1,6 @@
-package com.example.baeminsu.nodechat.Util;
+package com.example.baeminsu.nodechat.HTTP;
+
+import com.example.baeminsu.nodechat.NetworkHelper.NetworkDefine;
 
 import java.util.concurrent.TimeUnit;
 

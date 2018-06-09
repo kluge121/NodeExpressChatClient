@@ -1,4 +1,4 @@
-package com.example.baeminsu.nodechat.Util;
+package com.example.baeminsu.nodechat.HTTP;
 
 import com.example.baeminsu.nodechat.NetworkModel.ChatCreateResponseMessage;
 import com.example.baeminsu.nodechat.NetworkModel.LoginResponseMessage;

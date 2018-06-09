@@ -35,7 +35,11 @@ public class SentTextMessageViewHolder extends BasicViewHolder {
     public void setView(TextMessage textMessage) {
         messageBody.setText(textMessage.getMsg());
         messageTime.setText(dateFormat.format(textMessage.getDate()));
-        unReadCount.setText(textMessage.getUnreadcount()+"");
+        if (textMessage.getUnreadcount() == 0) {
+            unReadCount.setVisibility(View.INVISIBLE);
+        } else {
+            unReadCount.setText(textMessage.getUnreadcount() + "");
+        }
     }
 
 

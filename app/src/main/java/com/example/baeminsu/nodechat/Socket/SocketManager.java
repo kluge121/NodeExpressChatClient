@@ -1,36 +1,43 @@
-package com.example.baeminsu.nodechat.Util;
+package com.example.baeminsu.nodechat.Socket;
 
 import android.util.Log;
 
 import com.example.baeminsu.nodechat.Model.ChatRoom;
 import com.example.baeminsu.nodechat.Model.Modify;
 import com.example.baeminsu.nodechat.Model.TextMessage;
+import com.example.baeminsu.nodechat.NetworkHelper.NetworkDefine;
+import com.example.baeminsu.nodechat.Observer.Observable;
+import com.example.baeminsu.nodechat.Observer.Observer;
+import com.example.baeminsu.nodechat.Util.PropertyManager;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import io.realm.Realm;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 
-import static com.example.baeminsu.nodechat.Util.NetworkDefine.REQUEST_DATE_MODIFY;
+import static com.example.baeminsu.nodechat.NetworkHelper.NetworkDefine.REQUEST_DATE_MODIFY;
+import static com.example.baeminsu.nodechat.NetworkHelper.NetworkDefine.UNREAD_COUNT_READ_RESPONSE;
 
 /**
  * Created by baeminsu on 2018. 6. 3..
  */
 
-public class SocketManager {
+public class SocketManager implements Observable {
 
     private static SocketManager instance;
     private Socket socket;
     private int RECONNECTION_ATTEMPT = 10;
     private long CONNECTION_TIMEOUT = 30000;
-    private static NetworkInterface mNetworkInterface;
+    private Observer chatListObserver;
 
 
     public static SocketManager getInstance() {
@@ -40,7 +47,11 @@ public class SocketManager {
         return instance;
     }
 
-    public void createSendSocket() {
+    private SocketManager() {
+        createSendSocket();
+    }
+
+    private void createSendSocket() {
         try {
             Manager manager = new Manager(new URI(NetworkDefine.BASE_URL));
             manager.timeout(CONNECTION_TIMEOUT);
@@ -54,7 +65,6 @@ public class SocketManager {
 
     }
 
-
     public Socket getSocket() {
         return socket;
     }
@@ -62,7 +72,7 @@ public class SocketManager {
 
     public void connectSocket() {
         try {
-            createSendSocket();
+//            createSendSocket();
             makeConnection();
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,7 +80,7 @@ public class SocketManager {
     }
 
     public void disconnectSockect() {
-        unregisterConnectionAttributes();
+        unregisterAllConnectionAttributes();
         socket.disconnect();
         socket = null;
 
@@ -80,35 +90,47 @@ public class SocketManager {
 
     private void makeConnection() throws URISyntaxException {
         if (socket != null) {
-            registerConnectionAttributes();
+            registerAllConnectionAttributes();
             socket.connect();
 
         }
     }
 
-    private void registerConnectionAttributes() {
+    private void registerAllConnectionAttributes() {
         try {
             socket.on(Socket.EVENT_CONNECT_ERROR, onConnectionError);
             socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectionTimeOut);
             socket.on(Socket.EVENT_DISCONNECT, onServerDisconnect);
             socket.on(NetworkDefine.RECEIVE_MESSAGE, onReceiveMessage);
-            socket.on(NetworkDefine.RESPONSE_CREATE_CHAT_ROOM, getOnReceiveCreateChatRoomMessage);
+            socket.on(NetworkDefine.RESPONSE_CREATE_CHAT_ROOM, onReceiveCreateChatRoomMessage);
+//            socket.on(UNREAD_COUNT_READ_RESPONSE, onUnReadCountReceiveMessage);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void unregisterConnectionAttributes() {
+    private void unregisterAllConnectionAttributes() {
         try {
             socket.off(Socket.EVENT_CONNECT_ERROR, onConnectionError);
             socket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectionTimeOut);
             socket.off(Socket.EVENT_DISCONNECT, onServerDisconnect);
             socket.off(NetworkDefine.RECEIVE_MESSAGE, onReceiveMessage);
-            socket.off(NetworkDefine.RESPONSE_CREATE_CHAT_ROOM, getOnReceiveCreateChatRoomMessage);
+            socket.off(NetworkDefine.RESPONSE_CREATE_CHAT_ROOM, onReceiveCreateChatRoomMessage);
+            socket.off(UNREAD_COUNT_READ_RESPONSE, onUnReadCountReceiveMessage);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    public void registerChatRoomEnterRelativeSocket() {
+        socket.on(UNREAD_COUNT_READ_RESPONSE, onUnReadCountReceiveMessage);
+    }
+
+    public void unnregisterChatRoomEnterRelativeSocket() {
+        socket.off(UNREAD_COUNT_READ_RESPONSE, onUnReadCountReceiveMessage);
+    }
+
 
     private Emitter.Listener onConnectionError = new Emitter.Listener() {
         @Override
@@ -125,55 +147,98 @@ public class SocketManager {
         public void call(Object... args) {
         }
     };
-
-    private Emitter.Listener getOnReceiveCreateChatRoomMessage = new Emitter.Listener() {
+    private Emitter.Listener onReceiveCreateChatRoomMessage = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
 
             try {
                 JSONObject jsonObject = (JSONObject) args[0];
                 int insertId = jsonObject.getInt("id");
-                String chatName = jsonObject.getString("chatName");
                 String lastMessage = jsonObject.getString("lastMessage");
                 int unReadCount = jsonObject.getInt("unreadcount");
                 /// 날짜 처리
-                String strDate = jsonObject.getString("lastDate");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-                Date date = dateFormat.parse(strDate);
+
+                String strLastCheckDate = jsonObject.getString("lastCheckDate");
+                String strLastMessageDate = jsonObject.getString("lastDate");
+                Date lastCheckDate = dateFormat.parse(strLastCheckDate);
+                Date lastMessageDate = dateFormat.parse(strLastMessageDate);
                 ///
-                String nickname = jsonObject.getString("nickname");
+
+                String sender = jsonObject.getString("sender");
+                String receiver = jsonObject.getString("receiver");
 
                 Realm realm = Realm.getDefaultInstance();
                 realm.beginTransaction();
                 // 로컬 시간 변경
                 Modify modify = realm.where(Modify.class).findFirst();
-                modify.setModify(date);
+                modify.setModify(lastMessageDate);
 
                 //내부DB에 채팅방 저장
                 ChatRoom chatRoom = realm.createObject(ChatRoom.class);
                 chatRoom.setChatId(insertId);
-                chatRoom.setChatName(chatName);
                 chatRoom.setUnReadCount(unReadCount);
-                chatRoom.setLastDate(date);
+                chatRoom.setLastDate(lastMessageDate);
                 chatRoom.setLastMessage(lastMessage);
-                chatRoom.setNickname(nickname);
+                chatRoom.setLastCheckDate(lastCheckDate);
+
+                if (sender.equals(PropertyManager.getInstance().getNickname())) {
+                    chatRoom.setChatName(receiver);
+                    chatRoom.setNickname(sender);
+                } else {
+                    chatRoom.setChatName(sender);
+                    chatRoom.setNickname(receiver);
+                }
+
                 realm.commitTransaction();
+                realm.close();
 
                 //서버 시간 변경
                 JSONObject modifyDate = new JSONObject();
-                modifyDate.put("modify", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").format(date));
+                modifyDate.put("modify", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").format(lastMessageDate));
                 modifyDate.put("nickname", PropertyManager.getInstance().getNickname());
                 socket.emit(REQUEST_DATE_MODIFY, modifyDate);
-                Log.e("채팅방 생성 리시브", "리시브");
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
         }
     };
-    private Emitter.Listener onReceiveMessage = new Emitter.Listener() {
+
+    private Emitter.Listener onUnReadCountReceiveMessage = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            JSONArray jsonArray = (JSONArray) args[0];
+            Realm realm = Realm.getDefaultInstance();
+            Log.e("체크", "언리드 카운팅 : " + jsonArray.length() + "개");
+            realm.beginTransaction();
+            String myNickname = PropertyManager.getInstance().getNickname();
+            try {
+                for (int i = 0; i < jsonArray.length(); i++) {
+
+                    JSONObject tmp = (JSONObject) jsonArray.get(i);
+                    int tmpId = tmp.getInt("id");
+                    String sender = tmp.getString("sender");
+                    int tmpUnreadCount = tmp.getInt("unreadcount");
+                    TextMessage tmpTextMessage = realm.where(TextMessage.class).equalTo("id", tmpId).findFirst();
+                    tmpTextMessage.setUnreadcount(tmpUnreadCount);
+
+
+                }
+                realm.commitTransaction();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            realm.close();
+
+
+        }
+    };
+    private Emitter.Listener onReceiveMessage = new Emitter.Listener() {
+        @Override
+        public synchronized void call(Object... args) {
             try {
 
                 JSONObject jsonObject = (JSONObject) args[0];
@@ -223,12 +288,14 @@ public class SocketManager {
 
                     realm.commitTransaction();
 
+
                     // 서버 시간 변경
                     JSONObject modifyDate = new JSONObject();
                     modifyDate.put("modify", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").format(date));
                     modifyDate.put("nickname", PropertyManager.getInstance().getNickname());
                     socket.emit(REQUEST_DATE_MODIFY, modifyDate);
                     Log.e("메세지 리시브", "리시브");
+                    realm.close();
                 }
 
 
@@ -238,6 +305,24 @@ public class SocketManager {
 
         }
     };
+
+    @Override
+    public void attach(Observer o) {
+        chatListObserver = o;
+
+    }
+
+    @Override
+    public void detach(Observer o) {
+        chatListObserver = null;
+
+    }
+
+    @Override
+    public void notifyObservers() {
+        chatListObserver.update();
+
+    }
 
 
     public interface NetworkInterface {

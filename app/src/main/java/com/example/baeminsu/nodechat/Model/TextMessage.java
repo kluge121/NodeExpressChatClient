@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Date;
 
 import io.realm.RealmModel;
+import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.RealmClass;
 
 /**
@@ -28,6 +29,7 @@ public class TextMessage implements RealmModel, Message {
     private String receiver;
     @SerializedName("chatName")
     private String chatName;
+
 
     public String getChatName() {
         return chatName;

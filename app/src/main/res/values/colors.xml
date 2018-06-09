@@ -5,7 +5,6 @@
     <color name="colorAccent">#FF4081</color>
 
 
-
     <color name="gray">#AAAAAA</color>
     <color name="recevie">#8d8479</color>
     <color name="sent">#8c7d87</color>
@@ -16,6 +15,7 @@
     <color name="yellow">#FFFF00</color>;
 
     <color name="lowgray">#50AAAAAA</color>
+    <color name="red">#FF0000</color>
 
 
 </resources>

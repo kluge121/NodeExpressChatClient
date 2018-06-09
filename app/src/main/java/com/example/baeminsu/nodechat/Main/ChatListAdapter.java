@@ -14,34 +14,51 @@ import com.example.baeminsu.nodechat.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
+
+import io.realm.RealmResults;
 
 /**
  * Created by baeminsu on 2018. 5. 29..
  */
 
-public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder> {
+public class ChatListAdapter extends RecyclerView.Adapter<BasicViewHolder> {
 
     private Context context;
-    private List<ChatRoom> list;
+    private RealmResults<ChatRoom> list;
 
+    private final int INIT_TYPE = -1;
 
-    ChatListAdapter(Context context, List<ChatRoom> list) {
+    ChatListAdapter(Context context, RealmResults<ChatRoom> list) {
         this.context = context;
-        this.list = list;
+        if (list != null)
+            this.list = list;
+    }
+
+    public RealmResults<ChatRoom> getList() {
+        return list;
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-
+    public BasicViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.recycler_item_chatroom, parent, false);
+        View view;
+
+        if (viewType == INIT_TYPE) {
+            view = inflater.inflate(R.layout.recycler_item_null, parent, false);
+            return new BasicViewHolder(view) {
+                @Override
+                public void setView(ChatRoom chatRoom) {
+                }
+            };
+
+        }
+
+        view = inflater.inflate(R.layout.recycler_item_chatroom, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, final int position) {
+    public void onBindViewHolder(BasicViewHolder holder, final int position) {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -52,17 +69,30 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
             }
         });
-        holder.setView(list.get(position));
+        if (list != null && list.size() > 0)
+            holder.setView(list.get(position));
 
 
+    }
+
+
+    @Override
+    public int getItemViewType(int position) {
+        if (list.get(position).getChatId() == -1)
+            return INIT_TYPE;
+
+        return super.getItemViewType(position);
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        if (list != null && list.size() > 0)
+            return list.size();
+        else
+            return 0;
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends BasicViewHolder {
 
 
         TextView chatTitle;
@@ -80,7 +110,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             unReadCount = itemView.findViewById(R.id.item_chatroom_unread_count);
         }
 
-        void setView(ChatRoom chatRoom) {
+        @Override
+        public void setView(ChatRoom chatRoom) {
             chatTitle.setText(chatRoom.getChatName());
             lastMessage.setText(chatRoom.getLastMessage());
 
@@ -111,8 +142,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                     lastMessageDate.setText(new SimpleDateFormat("MM월 dd일").format(lastDate));
                 }
             }
-
-
         }
+
+
     }
 }

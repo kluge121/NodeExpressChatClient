@@ -25,6 +25,7 @@ public class ReceiveTextMessageViewHolder extends BasicViewHolder {
     private TextView unReadCount;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm");
 
+    private final int INIT_MESSAGE = -1;
 
     public ReceiveTextMessageViewHolder(View itemView) {
         super(itemView);
@@ -39,7 +40,11 @@ public class ReceiveTextMessageViewHolder extends BasicViewHolder {
         userName.setText(textMessage.getReceiver());
         messageBody.setText(textMessage.getMsg());
         messageTime.setText(dateFormat.format(textMessage.getDate()));
-        unReadCount.setText(textMessage.getUnreadcount()+"");
+        if (textMessage.getUnreadcount() == 0) {
+            unReadCount.setVisibility(View.INVISIBLE);
+        } else {
+            unReadCount.setText(textMessage.getUnreadcount() + "");
+        }
     }
 
 }

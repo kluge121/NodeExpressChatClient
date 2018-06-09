@@ -32,6 +32,18 @@ public class ChatRoom implements RealmModel {
     @SerializedName("lastDate")
     Date lastDate;
 
+    @SerializedName("lastCheckDate")
+    Date lastCheckDate;
+
+    public void setLastCheckDate(Date lastCheckDate) {
+        this.lastCheckDate = lastCheckDate;
+    }
+
+    public Date getLastCheckDate() {
+
+        return lastCheckDate;
+    }
+
     public int getChatId() {
         return chatId;
     }
